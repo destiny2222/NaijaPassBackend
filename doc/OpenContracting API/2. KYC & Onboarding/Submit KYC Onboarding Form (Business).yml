@@ -14,9 +14,21 @@ http:
         "email": "info@gritinai.com",
         "phoneNumber": "+2348012345678",
         "businessName": "Gritinai Solutions Ltd",
+        "businessType": "Limited Liability Company",
         "registrationNumber": "RC-1299388",
+        "idType": "cac",
+        "idNumber": "RC-1299388",
+        "industry": "Information Technology",
         "taxIdentificationNumber": "TIN-00998822-0001",
-        "industryCategoryId": 2
+        "industryCategoryId": 2,
+        "registeredAddress": "15 Broad Street, Lagos",
+        "businessAddress": "22 Admiralty Way, Lekki, Lagos",
+        "contactPersonName": "Destiny Contractor",
+        "contactPersonEmail": "destiny@example.com",
+        "certificateOfIncorporation": "https://example.com/uploads/certificate.pdf",
+        "certificateOfIncorporationPublicId": "kyc/certificate-123",
+        "memorandumArticles": "https://example.com/uploads/memorandum.pdf",
+        "memorandumArticlesPublicId": "kyc/memorandum-123"
       }
   auth: inherit
 

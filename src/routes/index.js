@@ -5,6 +5,7 @@ import bidRoutes from './bidRoutes.js';
 import analyticsRoutes from './analyticsRoutes.js';
 import scraperRoutes from './scraperRoutes.js';
 import profileRoutes from './profileRoutes.js';
+import uploadRoutes from './uploadRoutes.js';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/bids', bidRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/scraper', scraperRoutes);
 router.use('/profile', profileRoutes);
+router.use('/uploads', uploadRoutes);
 
 export default router;

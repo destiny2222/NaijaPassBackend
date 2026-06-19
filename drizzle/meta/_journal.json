@@ -29,6 +29,13 @@
       "when": 1781831218300,
       "tag": "0003_naive_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781858511757,
+      "tag": "0004_magenta_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

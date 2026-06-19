@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "4e72bbb4-1efb-4be7-abc9-5003205fab3d",
     "name": "OpenContracting API",
-    "description": "Postman Collection for the OpenContracting platform API, covering Authentication, KYC & Onboarding, Bids & Tenders, Analytics, and Scraper Engine.",
+    "description": "Postman Collection for the OpenContracting platform API, covering Authentication, Profile, Uploads, KYC & Onboarding, Bids & Tenders, Analytics, and Scraper Engine.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -15,16 +15,16 @@
             {
               "listen": "test",
               "script": {
+                "type": "javascript",
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.success && jsonData.token) {",
-                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
-                  "    pm.test(\"Token saved successfully\", function () {",
-                  "        pm.expect(pm.collectionVariables.get(\"token\")).to.eql(jsonData.token);",
+                  "if (jsonData.success && jsonData.otp) {",
+                  "    pm.collectionVariables.set(\"otp\", jsonData.otp);",
+                  "    pm.test(\"OTP saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"otp\")).to.eql(jsonData.otp);",
                   "    });",
                   "}"
-                ],
-                "type": "javascript"
+                ]
               }
             }
           ],
@@ -36,7 +36,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Destiny Contractor\",\n  \"email\": \"destiny@example.com\",\n  \"password\": \"securepassword123\",\n  \"role\": \"user\"\n}",
+              "raw": "{\n  \"name\": \"Destiny Contractor\",\n  \"email\": \"destiny@example.com\",\n  \"phone\": \"+2348012345678\",\n  \"password\": \"securepassword123\",\n  \"role\": \"user\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -63,16 +63,16 @@
             {
               "listen": "test",
               "script": {
+                "type": "javascript",
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.success && jsonData.token) {",
-                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
-                  "    pm.test(\"Token saved successfully\", function () {",
-                  "        pm.expect(pm.collectionVariables.get(\"token\")).to.eql(jsonData.token);",
+                  "if (jsonData.success && jsonData.otp) {",
+                  "    pm.collectionVariables.set(\"otp\", jsonData.otp);",
+                  "    pm.test(\"OTP saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"otp\")).to.eql(jsonData.otp);",
                   "    });",
                   "}"
-                ],
-                "type": "javascript"
+                ]
               }
             }
           ],
@@ -106,6 +106,102 @@
           "response": []
         },
         {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    pm.test(\"Token saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"token\")).to.eql(jsonData.token);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"destiny@example.com\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resend OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.otp) {",
+                  "    pm.collectionVariables.set(\"otp\", jsonData.otp);",
+                  "    pm.test(\"OTP saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"otp\")).to.eql(jsonData.otp);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"destiny@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/resend-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "resend-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Mock Google Login Redirect",
           "request": {
             "auth": {
@@ -133,6 +229,7 @@
             {
               "listen": "test",
               "script": {
+                "type": "javascript",
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.success && jsonData.token) {",
@@ -141,8 +238,7 @@
                   "        pm.expect(pm.collectionVariables.get(\"token\")).to.eql(jsonData.token);",
                   "    });",
                   "}"
-                ],
-                "type": "javascript"
+                ]
               }
             }
           ],
@@ -235,7 +331,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"business\",\n  \"email\": \"info@gritinai.com\",\n  \"phoneNumber\": \"+2348012345678\",\n  \"businessName\": \"Gritinai Solutions Ltd\",\n  \"registrationNumber\": \"RC-1299388\",\n  \"taxIdentificationNumber\": \"TIN-00998822-0001\",\n  \"industryCategoryId\": 2\n}",
+              "raw": "{\n  \"type\": \"business\",\n  \"email\": \"info@gritinai.com\",\n  \"phoneNumber\": \"+2348012345678\",\n  \"businessName\": \"Gritinai Solutions Ltd\",\n  \"businessType\": \"Limited Liability Company\",\n  \"registrationNumber\": \"RC-1299388\",\n  \"idType\": \"cac\",\n  \"idNumber\": \"RC-1299388\",\n  \"industry\": \"Information Technology\",\n  \"taxIdentificationNumber\": \"TIN-00998822-0001\",\n  \"industryCategoryId\": 2,\n  \"registeredAddress\": \"15 Broad Street, Lagos\",\n  \"businessAddress\": \"22 Admiralty Way, Lekki, Lagos\",\n  \"contactPersonName\": \"Destiny Contractor\",\n  \"contactPersonEmail\": \"destiny@example.com\",\n  \"certificateOfIncorporation\": \"https://example.com/uploads/certificate.pdf\",\n  \"certificateOfIncorporationPublicId\": \"kyc/certificate-123\",\n  \"memorandumArticles\": \"https://example.com/uploads/memorandum.pdf\",\n  \"memorandumArticlesPublicId\": \"kyc/memorandum-123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -263,7 +359,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"individual\",\n  \"email\": \"john.doe@example.com\",\n  \"phoneNumber\": \"+2348087654321\"\n}",
+              "raw": "{\n  \"type\": \"individual\",\n  \"email\": \"john.doe@example.com\",\n  \"phoneNumber\": \"+2348087654321\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"nationality\": \"Nigerian\",\n  \"idType\": \"national_id\",\n  \"idNumber\": \"NIN-12345678901\",\n  \"residentialAddress\": \"12 Marina Road, Lagos\",\n  \"mailingAddress\": \"P.O. Box 1001, Lagos\",\n  \"idDocument\": \"https://example.com/uploads/id-document.pdf\",\n  \"idDocumentPublicId\": \"kyc/id-document-123\",\n  \"proofOfAddress\": \"https://example.com/uploads/proof-of-address.pdf\",\n  \"proofOfAddressPublicId\": \"kyc/proof-address-123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -598,6 +694,88 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "6. Profile",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/profile/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Returns the authenticated user profile plus KYC flags. Use user.kyc.hasCompletedKyc to check if KYC is approved."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Uploads",
+      "item": [
+        {
+          "name": "Upload KYC Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "PDF, JPG, PNG, or WEBP. Max 5MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/uploads/document",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "document"
+              ]
+            },
+            "description": "Uploads a KYC document to Cloudinary and saves data.url as {{uploaded_document_url}} and data.publicId as {{uploaded_document_public_id}}. Use those values in KYC document fields."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set(\"uploaded_document_url\", jsonData.data.url);",
+                  "    pm.collectionVariables.set(\"uploaded_document_public_id\", jsonData.data.publicId);",
+                  "    pm.test(\"Uploaded document URL saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"uploaded_document_url\")).to.eql(jsonData.data.url);",
+                  "    });",
+                  "    pm.test(\"Uploaded document public ID saved successfully\", function () {",
+                  "        pm.expect(pm.collectionVariables.get(\"uploaded_document_public_id\")).to.eql(jsonData.data.publicId);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "auth": {
@@ -613,11 +791,26 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3001",
       "type": "string"
     },
     {
       "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "uploaded_document_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "uploaded_document_public_id",
       "value": "",
       "type": "string"
     }

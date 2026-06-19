@@ -40,12 +40,72 @@ export async function submitKyc(req, res) {
       firstName,
       lastName,
       dob,
+      dateOfBirth,
+      date_of_birth,
+      nationality,
+      residentialAddress,
+      residential_address,
+      mailingAddress,
+      mailing_address,
+      idDocument,
+      id_document,
+      idDocumentPublicId,
+      id_document_public_id,
+      proofOfAddress,
+      proof_of_address,
+      proofOfAddressPublicId,
+      proof_of_address_public_id,
       businessName,
+      business_name,
       registrationNumber,
+      registration_number,
+      businessType,
+      business_type,
+      industry,
+      registeredAddress,
+      registered_address,
+      businessAddress,
+      business_address,
+      contactPersonName,
+      contact_person_name,
+      contactPersonEmail,
+      contact_person_email,
       taxIdentificationNumber,
+      tax_identification_number,
       industryCategoryId,
+      categoryId,
+      category_id,
+      certificateOfIncorporation,
+      certificate_of_incorporation,
+      certificateOfIncorporationPublicId,
+      certificate_of_incorporation_public_id,
+      memorandumArticles,
+      memorandum_articles,
+      memorandumArticlesPublicId,
+      memorandum_articles_public_id,
       representatives
     } = req.body;
+
+    const normalizedDateOfBirth = dateOfBirth || date_of_birth || dob || null;
+    const normalizedBusinessName = businessName || business_name || null;
+    const normalizedRegistrationNumber = registrationNumber || registration_number || null;
+    const normalizedTaxIdentificationNumber = taxIdentificationNumber || tax_identification_number || null;
+    const normalizedIndustryCategoryId = industryCategoryId || categoryId || category_id || null;
+    const normalizedBusinessType = businessType || business_type || null;
+    const normalizedRegisteredAddress = registeredAddress || registered_address || null;
+    const normalizedBusinessAddress = businessAddress || business_address || null;
+    const normalizedContactPersonName = contactPersonName || contact_person_name || null;
+    const normalizedContactPersonEmail = contactPersonEmail || contact_person_email || null;
+    const normalizedResidentialAddress = residentialAddress || residential_address || null;
+    const normalizedMailingAddress = mailingAddress || mailing_address || null;
+    const normalizedIdDocument = idDocument || id_document || null;
+    const normalizedIdDocumentPublicId = idDocumentPublicId || id_document_public_id || null;
+    const normalizedProofOfAddress = proofOfAddress || proof_of_address || null;
+    const normalizedProofOfAddressPublicId = proofOfAddressPublicId || proof_of_address_public_id || null;
+    const normalizedCertificateOfIncorporation = certificateOfIncorporation || certificate_of_incorporation || null;
+    const normalizedCertificateOfIncorporationPublicId = certificateOfIncorporationPublicId || certificate_of_incorporation_public_id || null;
+    const normalizedMemorandumArticles = memorandumArticles || memorandum_articles || null;
+    const normalizedMemorandumArticlesPublicId = memorandumArticlesPublicId || memorandum_articles_public_id || null;
 
     if (!type || !email || !phoneNumber || !idType || !idNumber) {
       return res.status(400).json({ success: false, message: 'Type, email, phoneNumber, idType, and idNumber are required' });
@@ -60,7 +120,7 @@ export async function submitKyc(req, res) {
         return res.status(400).json({ success: false, message: 'firstName and lastName are required for individual KYC' });
       }
     } else {
-      if (!businessName) {
+      if (!normalizedBusinessName) {
         return res.status(400).json({ success: false, message: 'businessName is required for business KYC' });
       }
     }
@@ -83,8 +143,8 @@ export async function submitKyc(req, res) {
       idNumber,
       firstName,
       lastName,
-      dob,
-      businessName
+      dob: normalizedDateOfBirth,
+      businessName: normalizedBusinessName
     });
 
     const kycId = randomUUID();
@@ -102,16 +162,34 @@ export async function submitKyc(req, res) {
         status,
         email,
         phoneNumber,
-        businessName: type === 'business' ? businessName : null,
-        registrationNumber: type === 'business' ? (registrationNumber || idNumber) : null,
-        taxIdentificationNumber: type === 'business' ? (taxIdentificationNumber || null) : null,
+        businessName: type === 'business' ? normalizedBusinessName : null,
+        registrationNumber: type === 'business' ? (normalizedRegistrationNumber || idNumber) : null,
+        taxIdentificationNumber: type === 'business' ? normalizedTaxIdentificationNumber : null,
         rejectionReason,
-        industryCategoryId: type === 'business' ? (industryCategoryId || null) : null,
+        industryCategoryId: type === 'business' ? normalizedIndustryCategoryId : null,
         idType,
         idNumber,
         firstName: type === 'individual' ? firstName : null,
         lastName: type === 'individual' ? lastName : null,
-        dob: type === 'individual' ? dob : null,
+        dob: type === 'individual' ? normalizedDateOfBirth : null,
+        dateOfBirth: type === 'individual' ? normalizedDateOfBirth : null,
+        nationality: type === 'individual' ? (nationality || null) : null,
+        residentialAddress: type === 'individual' ? normalizedResidentialAddress : null,
+        mailingAddress: type === 'individual' ? normalizedMailingAddress : null,
+        idDocument: type === 'individual' ? normalizedIdDocument : null,
+        idDocumentPublicId: type === 'individual' ? normalizedIdDocumentPublicId : null,
+        proofOfAddress: type === 'individual' ? normalizedProofOfAddress : null,
+        proofOfAddressPublicId: type === 'individual' ? normalizedProofOfAddressPublicId : null,
+        businessType: type === 'business' ? normalizedBusinessType : null,
+        industry: type === 'business' ? (industry || null) : null,
+        registeredAddress: type === 'business' ? normalizedRegisteredAddress : null,
+        businessAddress: type === 'business' ? normalizedBusinessAddress : null,
+        contactPersonName: type === 'business' ? normalizedContactPersonName : null,
+        contactPersonEmail: type === 'business' ? normalizedContactPersonEmail : null,
+        certificateOfIncorporation: type === 'business' ? normalizedCertificateOfIncorporation : null,
+        certificateOfIncorporationPublicId: type === 'business' ? normalizedCertificateOfIncorporationPublicId : null,
+        memorandumArticles: type === 'business' ? normalizedMemorandumArticles : null,
+        memorandumArticlesPublicId: type === 'business' ? normalizedMemorandumArticlesPublicId : null,
         verificationStatus,
         verifiedAt: isVerified ? new Date(verificationResult.verifiedAt) : null,
         thirdPartyReference: verificationResult.reference || null,
@@ -203,6 +281,24 @@ export async function getMyKyc(req, res) {
         firstName: kyc.firstName,
         lastName: kyc.lastName,
         dob: kyc.dob,
+        dateOfBirth: kyc.dateOfBirth,
+        nationality: kyc.nationality,
+        residentialAddress: kyc.residentialAddress,
+        mailingAddress: kyc.mailingAddress,
+        idDocument: kyc.idDocument,
+        idDocumentPublicId: kyc.idDocumentPublicId,
+        proofOfAddress: kyc.proofOfAddress,
+        proofOfAddressPublicId: kyc.proofOfAddressPublicId,
+        businessType: kyc.businessType,
+        industry: kyc.industry,
+        registeredAddress: kyc.registeredAddress,
+        businessAddress: kyc.businessAddress,
+        contactPersonName: kyc.contactPersonName,
+        contactPersonEmail: kyc.contactPersonEmail,
+        certificateOfIncorporation: kyc.certificateOfIncorporation,
+        certificateOfIncorporationPublicId: kyc.certificateOfIncorporationPublicId,
+        memorandumArticles: kyc.memorandumArticles,
+        memorandumArticlesPublicId: kyc.memorandumArticlesPublicId,
         verificationStatus: kyc.verificationStatus,
         verifiedAt: kyc.verifiedAt,
         thirdPartyReference: kyc.thirdPartyReference,
@@ -308,6 +404,24 @@ export async function listAllKycs(req, res) {
           firstName: row.kycs.firstName,
           lastName: row.kycs.lastName,
           dob: row.kycs.dob,
+          dateOfBirth: row.kycs.dateOfBirth,
+          nationality: row.kycs.nationality,
+          residentialAddress: row.kycs.residentialAddress,
+          mailingAddress: row.kycs.mailingAddress,
+          idDocument: row.kycs.idDocument,
+          idDocumentPublicId: row.kycs.idDocumentPublicId,
+          proofOfAddress: row.kycs.proofOfAddress,
+          proofOfAddressPublicId: row.kycs.proofOfAddressPublicId,
+          businessType: row.kycs.businessType,
+          industry: row.kycs.industry,
+          registeredAddress: row.kycs.registeredAddress,
+          businessAddress: row.kycs.businessAddress,
+          contactPersonName: row.kycs.contactPersonName,
+          contactPersonEmail: row.kycs.contactPersonEmail,
+          certificateOfIncorporation: row.kycs.certificateOfIncorporation,
+          certificateOfIncorporationPublicId: row.kycs.certificateOfIncorporationPublicId,
+          memorandumArticles: row.kycs.memorandumArticles,
+          memorandumArticlesPublicId: row.kycs.memorandumArticlesPublicId,
           verificationStatus: row.kycs.verificationStatus,
           verifiedAt: row.kycs.verifiedAt,
           thirdPartyReference: row.kycs.thirdPartyReference,
@@ -413,6 +527,16 @@ export async function getVerifiedBusinessesDirectory(req, res) {
           phoneNumber: row.kycs.phoneNumber,
           registrationNumber: row.kycs.registrationNumber,
           taxIdentificationNumber: row.kycs.taxIdentificationNumber,
+          businessType: row.kycs.businessType,
+          industry: row.kycs.industry,
+          registeredAddress: row.kycs.registeredAddress,
+          businessAddress: row.kycs.businessAddress,
+          contactPersonName: row.kycs.contactPersonName,
+          contactPersonEmail: row.kycs.contactPersonEmail,
+          certificateOfIncorporation: row.kycs.certificateOfIncorporation,
+          certificateOfIncorporationPublicId: row.kycs.certificateOfIncorporationPublicId,
+          memorandumArticles: row.kycs.memorandumArticles,
+          memorandumArticlesPublicId: row.kycs.memorandumArticlesPublicId,
           industryCategoryId: row.kycs.industryCategoryId,
           industryCategory,
           verifiedAt: row.kycs.verifiedAt,
