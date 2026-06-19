@@ -1,0 +1,27 @@
+info:
+  name: Submit KYC Onboarding Form (Business)
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{base_url}}/api/kyc/submit"
+  body:
+    type: json
+    data: |-
+      {
+        "type": "business",
+        "email": "info@gritinai.com",
+        "phoneNumber": "+2348012345678",
+        "businessName": "Gritinai Solutions Ltd",
+        "registrationNumber": "RC-1299388",
+        "taxIdentificationNumber": "TIN-00998822-0001",
+        "industryCategoryId": 2
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

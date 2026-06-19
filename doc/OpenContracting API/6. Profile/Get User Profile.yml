@@ -1,0 +1,18 @@
+info:
+  name: Get User Profile
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{base_url}}/api/profile/me"
+
+docs:
+  content: Returns the authenticated user's profile plus KYC flags. Use `user.kyc.hasCompletedKyc` to check if the user's KYC is approved.
+  type: text/markdown
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,21 @@
+info:
+  name: Add Bid Category (Admin)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/bids/categories"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Healthcare & Equipment"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

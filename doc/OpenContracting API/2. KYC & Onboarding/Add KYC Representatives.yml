@@ -1,0 +1,31 @@
+info:
+  name: Add KYC Representatives
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{base_url}}/api/kyc/representatives"
+  body:
+    type: json
+    data: |-
+      {
+        "kycId": "49bf5d70-ef1d-4074-a63e-72bc58a0e23e",
+        "representatives": [
+          {
+            "name": "Alice Green",
+            "position": "Chief Executive Officer"
+          },
+          {
+            "name": "Bob Smith",
+            "position": "Director of Operations"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

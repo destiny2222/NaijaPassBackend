@@ -5,9 +5,12 @@ export const usersTable = mysqlTable('users', {
   id: varchar('id', { length: 36 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
+  phone: varchar('phone', {length: 225 }).notNull(),
   password: varchar('password', { length: 255 }).notNull(),
   role: mysqlEnum('role', ['user', 'admin']).default('user').notNull(),
   emailVerifiedAt: datetime('email_verified_at'),
+  otpCode: varchar('otp_code', { length: 6 }),
+  otpExpiresAt: datetime('otp_expires_at'),
 });
 
 export const industryCategoriesTable = mysqlTable('industry_categories', {

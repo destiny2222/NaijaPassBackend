@@ -1,0 +1,33 @@
+info:
+  name: Login User
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "destiny@example.com",
+        "password": "securepassword123"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.otp) {
+            bru.setVar("otp", jsonData.otp);
+            test("OTP saved successfully", function () {
+                expect(bru.getVar("otp")).to.eql(jsonData.otp);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

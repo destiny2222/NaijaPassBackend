@@ -1,0 +1,33 @@
+info:
+  name: Verify OTP
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/verify-otp"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "destiny@example.com",
+        "otp": "{{otp}}"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.token) {
+            bru.setVar("token", jsonData.token);
+            test("Token saved successfully", function () {
+                expect(bru.getVar("token")).to.eql(jsonData.token);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

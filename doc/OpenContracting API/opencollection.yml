@@ -1,0 +1,39 @@
+opencollection: 1.0.0
+
+info:
+  name: OpenContracting API
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: "{{token}}"
+  variables:
+    - name: base_url
+      value: http://localhost:3001
+    - name: token
+      value: ""
+    - name: otp
+      value: "407296"
+
+docs:
+  content: Postman Collection for the OpenContracting platform API, covering Authentication, Profile, KYC & Onboarding, Bids & Tenders, Analytics, and Scraper Engine.
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+​      - node_modules
+      - .git

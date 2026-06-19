@@ -15,7 +15,6 @@ const router = Router();
 
 router.get('/categories', getIndustryCategories);
 router.post('/categories', authMiddleware, adminMiddleware, addIndustryCategory);
-
 router.post('/submit', authMiddleware, submitKyc);
 router.get('/my', authMiddleware, getMyKyc);
 router.post('/representatives', authMiddleware, addRepresentatives);

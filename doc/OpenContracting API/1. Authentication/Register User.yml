@@ -1,0 +1,36 @@
+info:
+  name: Register User
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/register"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Destiny Contractor",
+        "email": "destiny@example.com",
+        "phone": "+2348012345678",
+        "password": "securepassword123",
+        "role": "user"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.otp) {
+            bru.setVar("otp", jsonData.otp);
+            test("OTP saved successfully", function () {
+                expect(bru.getVar("otp")).to.eql(jsonData.otp);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
