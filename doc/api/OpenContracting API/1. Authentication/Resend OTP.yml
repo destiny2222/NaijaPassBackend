@@ -1,0 +1,32 @@
+info:
+  name: Resend OTP
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/resend-otp"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "destiny@example.com"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.otp) {
+            bru.setVar("otp", jsonData.otp);
+            test("OTP saved successfully", function () {
+                expect(bru.getVar("otp")).to.eql(jsonData.otp);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,21 @@
+info:
+  name: Add Industry Category (Admin)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/kyc/categories"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Health & Medical Supply"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,30 @@
+info:
+  name: Mock Google OAuth Callback
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{base_url}}/api/auth/google/callback?code=mock_google_auth_code_9921"
+  params:
+    - name: code
+      value: mock_google_auth_code_9921
+      type: query
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.token) {
+            bru.setVar("token", jsonData.token);
+            test("Token saved successfully", function () {
+                expect(bru.getVar("token")).to.eql(jsonData.token);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

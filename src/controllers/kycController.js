@@ -2,7 +2,6 @@ import { randomUUID } from 'crypto';
 import { eq, and, like } from 'drizzle-orm';
 import db from '../db/index.js';
 import { kycsTable, kycRepresentativesTable, industryCategoriesTable, usersTable } from '../db/schema.js';
-import { idVerificationService } from '../utils/idVerificationService.js';
 
 // Get Industry Categories
 export async function getIndustryCategories(req, res) {
@@ -129,33 +128,14 @@ export async function submitKyc(req, res) {
     const existingKycResult = await db.select().from(kycsTable).where(eq(kycsTable.userId, req.user.id)).limit(1);
     const existingKyc = existingKycResult[0];
 
-    if (existingKyc) {
-      return res.status(400).json({
-        success: false,
-        message: 'KYC record already exists for this user. Update your submission or contact support.'
-      });
-    }
+    const kycId = existingKyc ? existingKyc.id : randomUUID();
+    const status = 'inprogress';
+    const verificationStatus = 'unverified';
+    const rejectionReason = null;
 
-    // Call simulated third-party verification service
-    const verificationResult = await idVerificationService.verifyId({
-      type,
-      idType,
-      idNumber,
-      firstName,
-      lastName,
-      dob: normalizedDateOfBirth,
-      businessName: normalizedBusinessName
-    });
-
-    const kycId = randomUUID();
-    const isVerified = verificationResult.verified;
-    const status = isVerified ? 'approved' : 'rejected';
-    const verificationStatus = isVerified ? 'verified' : 'failed';
-    const rejectionReason = isVerified ? null : (verificationResult.message || 'Third-party verification failed');
-
-    // Run insert in a transaction to safely handle both kyc and representatives
+    // Run insert/update in a transaction to safely handle both kyc and representatives
     await db.transaction(async (tx) => {
-      await tx.insert(kycsTable).values({
+      const kycData = {
         id: kycId,
         userId: req.user.id,
         type,
@@ -176,27 +156,36 @@ export async function submitKyc(req, res) {
         nationality: type === 'individual' ? (nationality || null) : null,
         residentialAddress: type === 'individual' ? normalizedResidentialAddress : null,
         mailingAddress: type === 'individual' ? normalizedMailingAddress : null,
-        idDocument: type === 'individual' ? normalizedIdDocument : null,
-        idDocumentPublicId: type === 'individual' ? normalizedIdDocumentPublicId : null,
-        proofOfAddress: type === 'individual' ? normalizedProofOfAddress : null,
-        proofOfAddressPublicId: type === 'individual' ? normalizedProofOfAddressPublicId : null,
+        idDocument: type === 'individual' ? (normalizedIdDocument !== null ? normalizedIdDocument : existingKyc?.idDocument) : null,
+        idDocumentPublicId: type === 'individual' ? (normalizedIdDocumentPublicId !== null ? normalizedIdDocumentPublicId : existingKyc?.idDocumentPublicId) : null,
+        proofOfAddress: type === 'individual' ? (normalizedProofOfAddress !== null ? normalizedProofOfAddress : existingKyc?.proofOfAddress) : null,
+        proofOfAddressPublicId: type === 'individual' ? (normalizedProofOfAddressPublicId !== null ? normalizedProofOfAddressPublicId : existingKyc?.proofOfAddressPublicId) : null,
         businessType: type === 'business' ? normalizedBusinessType : null,
         industry: type === 'business' ? (industry || null) : null,
         registeredAddress: type === 'business' ? normalizedRegisteredAddress : null,
         businessAddress: type === 'business' ? normalizedBusinessAddress : null,
         contactPersonName: type === 'business' ? normalizedContactPersonName : null,
         contactPersonEmail: type === 'business' ? normalizedContactPersonEmail : null,
-        certificateOfIncorporation: type === 'business' ? normalizedCertificateOfIncorporation : null,
-        certificateOfIncorporationPublicId: type === 'business' ? normalizedCertificateOfIncorporationPublicId : null,
-        memorandumArticles: type === 'business' ? normalizedMemorandumArticles : null,
-        memorandumArticlesPublicId: type === 'business' ? normalizedMemorandumArticlesPublicId : null,
+        certificateOfIncorporation: type === 'business' ? (normalizedCertificateOfIncorporation !== null ? normalizedCertificateOfIncorporation : existingKyc?.certificateOfIncorporation) : null,
+        certificateOfIncorporationPublicId: type === 'business' ? (normalizedCertificateOfIncorporationPublicId !== null ? normalizedCertificateOfIncorporationPublicId : existingKyc?.certificateOfIncorporationPublicId) : null,
+        memorandumArticles: type === 'business' ? (normalizedMemorandumArticles !== null ? normalizedMemorandumArticles : existingKyc?.memorandumArticles) : null,
+        memorandumArticlesPublicId: type === 'business' ? (normalizedMemorandumArticlesPublicId !== null ? normalizedMemorandumArticlesPublicId : existingKyc?.memorandumArticlesPublicId) : null,
         verificationStatus,
-        verifiedAt: isVerified ? new Date(verificationResult.verifiedAt) : null,
-        thirdPartyReference: verificationResult.reference || null,
-        verificationDetails: JSON.stringify(verificationResult)
-      });
+        verifiedAt: null,
+        thirdPartyReference: null,
+        verificationDetails: null
+      };
+
+      if (existingKyc) {
+        await tx.update(kycsTable).set(kycData).where(eq(kycsTable.id, kycId));
+      } else {
+        await tx.insert(kycsTable).values(kycData);
+      }
 
       if (type === 'business' && representatives && Array.isArray(representatives) && representatives.length > 0) {
+        if (existingKyc) {
+          await tx.delete(kycRepresentativesTable).where(eq(kycRepresentativesTable.kycId, kycId));
+        }
         const repsToInsert = representatives.map(rep => ({
           kycId,
           name: rep.name,
@@ -206,18 +195,10 @@ export async function submitKyc(req, res) {
       }
     });
 
-    if (!isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: `KYC submission failed identity verification: ${rejectionReason}`,
-        data: { id: kycId, userId: req.user.id, type, status, verificationStatus, rejectionReason }
-      });
-    }
-
     return res.status(201).json({
       success: true,
-      message: 'KYC form submitted and verified successfully',
-      data: { id: kycId, userId: req.user.id, type, status, verificationStatus, thirdPartyReference: verificationResult.reference }
+      message: 'KYC form submitted successfully and is pending review',
+      data: { id: kycId, userId: req.user.id, type, status, verificationStatus, thirdPartyReference: null }
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'KYC submission failed', error: err.message });
@@ -348,6 +329,7 @@ export async function addRepresentatives(req, res) {
       success: true,
       message: `${representatives.length} representative(s) added successfully`
     });
+    
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add representatives', error: err.message });
   }
@@ -483,6 +465,8 @@ export async function reviewKyc(req, res) {
       message: `KYC submission updated successfully to status: ${status}`,
       data: { id, status, rejectionReason: updateData.rejectionReason }
     });
+
+
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update KYC status', error: err.message });
   }

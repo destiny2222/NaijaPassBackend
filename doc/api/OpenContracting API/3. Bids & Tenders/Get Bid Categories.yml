@@ -1,0 +1,14 @@
+info:
+  name: Get Bid Categories
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{base_url}}/api/bids/categories"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

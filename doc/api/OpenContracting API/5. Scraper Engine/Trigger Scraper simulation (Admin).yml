@@ -1,0 +1,22 @@
+info:
+  name: Trigger Scraper simulation (Admin)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/scraper/run"
+  body:
+    type: json
+    data: |-
+      {
+        "url": "https://tenders.gov.ng/active-listings",
+        "selector": ".tender-list-item"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

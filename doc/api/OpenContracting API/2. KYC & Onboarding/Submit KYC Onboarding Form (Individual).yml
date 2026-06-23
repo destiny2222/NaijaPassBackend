@@ -1,0 +1,35 @@
+info:
+  name: Submit KYC Onboarding Form (Individual)
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/api/kyc/submit"
+  body:
+    type: json
+    data: |-
+      {
+        "type": "individual",
+        "email": "john.doe@example.com",
+        "phoneNumber": "+2348087654321",
+        "firstName": "John",
+        "lastName": "Doe",
+        "dateOfBirth": "1990-01-15",
+        "nationality": "Nigerian",
+        "idType": "national_id",
+        "idNumber": "NIN-12345678901",
+        "residentialAddress": "12 Marina Road, Lagos",
+        "mailingAddress": "P.O. Box 1001, Lagos",
+        "idDocument": "https://example.com/uploads/id-document.pdf",
+        "idDocumentPublicId": "kyc/id-document-123",
+        "proofOfAddress": "https://example.com/uploads/proof-of-address.pdf",
+        "proofOfAddressPublicId": "kyc/proof-address-123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

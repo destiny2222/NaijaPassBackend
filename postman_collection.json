@@ -544,13 +544,23 @@
           "response": []
         },
         {
-          "name": "Create Bid (Admin)",
+          "name": "Create Bid (Admin or Verified Business)",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Dualization of Lagos-Ibadan Expressway Sector III\",\n  \"bidNumber\": \"BID-2026-FMWH-0089\",\n  \"deadline\": \"2026-08-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works & Housing\",\n  \"categoryId\": 1\n}",
+              "raw": "{\n  \"title\": \"Dualization of Lagos-Ibadan Expressway Sector III\",\n  \"bidNumber\": \"BID-2026-FMWH-0089\",\n  \"deadline\": \"2026-08-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works & Housing\",\n  \"procuringEntity\": \"Federal Ministry of Works & Housing\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Procurement for the rehabilitation and dualization of Lagos-Ibadan Expressway Sector III.\",\n  \"status\": \"published\",\n  \"categoryId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -565,6 +575,96 @@
               "path": [
                 "api",
                 "bids"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Bid (Admin or Verified Business)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Lagos-Ibadan Expressway Project\",\n  \"bidNumber\": \"BID-2026-FMWH-0089-UPDATED\",\n  \"deadline\": \"2026-09-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works\",\n  \"procuringEntity\": \"Federal Ministry of Works\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Updated procurement details for the Lagos-Ibadan Expressway project.\",\n  \"status\": \"published\",\n  \"categoryId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "bids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ea8b1a8d-19cd-4869-90bc-9e58319fbb1c",
+                  "description": "Bid ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patch Bid (Admin or Verified Business)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deadline\": \"2026-10-15T17:00:00.000Z\",\n  \"location\": \"Akinyele LGA, Oyo State\",\n  \"status\": \"draft\",\n  \"categoryId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bids/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "bids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ea8b1a8d-19cd-4869-90bc-9e58319fbb1c",
+                  "description": "Bid ID"
+                }
               ]
             }
           },
@@ -643,18 +743,32 @@
           "name": "Get Dashboard Analytics",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/analytics",
+              "raw": "{{base_url}}/api/analytics?userId=",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "analytics"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Optional. Admins can provide a user ID to scope KYC analytics to that user. Regular users always get their own analytics."
+                }
               ]
             }
           },

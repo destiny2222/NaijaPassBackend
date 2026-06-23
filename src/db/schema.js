@@ -73,16 +73,45 @@ export const bidCategoriesTable = mysqlTable('bid_categories', {
 
 export const bidsTable = mysqlTable('bids', {
   id: varchar('id', { length: 36 }).primaryKey(),
+  createdById: varchar('created_by_id', { length: 36 }).references(() => usersTable.id, { onDelete: 'set null' }),
   title: varchar('title', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).unique(),
   bidNumber: varchar('bid_number', { length: 255 }).notNull().unique(),
   deadline: datetime('deadline').notNull(),
   agency: varchar('agency', { length: 255 }).notNull(),
+  procuringEntity: varchar('procuring_entity', { length: 255 }),
+  sector: varchar('sector', { length: 255 }),
+  location: varchar('location', { length: 255 }),
+  description: text('description'),
+  status: mysqlEnum('status', ['draft', 'published', 'cancelled', 'awarded']).default('published').notNull(),
   categoryId: int('category_id').references(() => bidCategoriesTable.id),
+});
+
+export const bidApplicationsTable = mysqlTable('bid_applications', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  bidId: varchar('bid_id', { length: 36 }).references(() => bidsTable.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 36 }).references(() => usersTable.id, { onDelete: 'cascade' }).notNull(),
+  proposalText: text('proposal_text').notNull(),
+  proposedAmount: varchar('proposed_amount', { length: 255 }),
+  status: mysqlEnum('status', ['pending', 'accepted', 'rejected']).default('pending').notNull(),
+  createdAt: datetime('created_at').notNull(),
+});
+
+export const bidReviewsTable = mysqlTable('bid_reviews', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  bidId: varchar('bid_id', { length: 36 }).references(() => bidsTable.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar('user_id', { length: 36 }).references(() => usersTable.id, { onDelete: 'cascade' }).notNull(),
+  rating: int('rating').notNull(),
+  comment: text('comment').notNull(),
+  createdAt: datetime('created_at').notNull(),
 });
 
 // Relationships
 export const usersRelations = relations(usersTable, ({ many }) => ({
   kycs: many(kycsTable),
+  bids: many(bidsTable),
+  bidApplications: many(bidApplicationsTable),
+  bidReviews: many(bidReviewsTable),
 }));
 
 export const kycsRelations = relations(kycsTable, ({ one, many }) => ({
@@ -112,9 +141,37 @@ export const bidCategoriesRelations = relations(bidCategoriesTable, ({ many }) =
   bids: many(bidsTable),
 }));
 
-export const bidsRelations = relations(bidsTable, ({ one }) => ({
+export const bidsRelations = relations(bidsTable, ({ one, many }) => ({
+  createdBy: one(usersTable, {
+    fields: [bidsTable.createdById],
+    references: [usersTable.id],
+  }),
   category: one(bidCategoriesTable, {
     fields: [bidsTable.categoryId],
     references: [bidCategoriesTable.id],
+  }),
+  applications: many(bidApplicationsTable),
+  reviews: many(bidReviewsTable),
+}));
+
+export const bidApplicationsRelations = relations(bidApplicationsTable, ({ one }) => ({
+  bid: one(bidsTable, {
+    fields: [bidApplicationsTable.bidId],
+    references: [bidsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [bidApplicationsTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const bidReviewsRelations = relations(bidReviewsTable, ({ one }) => ({
+  bid: one(bidsTable, {
+    fields: [bidReviewsTable.bidId],
+    references: [bidsTable.id],
+  }),
+  user: one(usersTable, {
+    fields: [bidReviewsTable.userId],
+    references: [usersTable.id],
   }),
 }));

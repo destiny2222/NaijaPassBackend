@@ -1,0 +1,19 @@
+info:
+  name: List All KYCs (Admin)
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{base_url}}/api/kyc/all?status=pending"
+  params:
+    - name: status
+      value: pending
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

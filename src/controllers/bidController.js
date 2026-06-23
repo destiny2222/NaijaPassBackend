@@ -1,8 +1,27 @@
 import { randomUUID } from 'crypto';
-import { eq, and, gte, lt, like } from 'drizzle-orm';
+import { eq, and, gte, lt, like, or } from 'drizzle-orm';
 import moment from 'moment';
 import db from '../db/index.js';
-import { bidsTable, bidCategoriesTable } from '../db/schema.js';
+import { bidsTable, bidCategoriesTable, kycsTable, bidApplicationsTable, bidReviewsTable, usersTable } from '../db/schema.js';
+
+const BID_STATUSES = ['draft', 'published', 'cancelled', 'awarded'];
+
+async function canManageBids(user) {
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  const approvedBusinessKyc = await db.select()
+    .from(kycsTable)
+    .where(and(
+      eq(kycsTable.userId, user.id),
+      eq(kycsTable.type, 'business'),
+      eq(kycsTable.status, 'approved')
+    ))
+    .limit(1);
+
+  return approvedBusinessKyc.length > 0;
+}
 
 // Get Bid Categories
 export async function getBidCategories(req, res) {
@@ -28,12 +47,36 @@ export async function addBidCategory(req, res) {
   }
 }
 
-// Create Bid (Admin only)
+// Create Bid (Admin or verified business only)
 export async function createBid(req, res) {
   try {
-    const { title, bidNumber, deadline, agency, categoryId } = req.body;
+    const {
+      title,
+      bidNumber,
+      deadline,
+      agency,
+      procuringEntity,
+      sector,
+      location,
+      description,
+      status,
+      bidStatus,
+      categoryId
+    } = req.body;
     if (!title || !bidNumber || !deadline || !agency) {
       return res.status(400).json({ success: false, message: 'Title, bidNumber, deadline, and agency are required' });
+    }
+
+    const normalizedStatus = status || bidStatus || 'published';
+    if (!BID_STATUSES.includes(normalizedStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    if (!(await canManageBids(req.user))) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: only admins or businesses with approved KYC can create bids'
+      });
     }
 
     // Verify category exists if provided
@@ -45,26 +88,177 @@ export async function createBid(req, res) {
     }
 
     const bidId = randomUUID();
+    const generatedSlug = title.toLowerCase();
 
     await db.insert(bidsTable).values({
       id: bidId,
+      createdById: req.user.id,
       title,
+      slug: generatedSlug,
       bidNumber,
       deadline: new Date(deadline),
       agency,
+      procuringEntity: procuringEntity || null,
+      sector: sector || null,
+      location: location || null,
+      description: description || null,
+      status: normalizedStatus,
       categoryId: categoryId || null
     });
 
     return res.status(201).json({
       success: true,
       message: 'Bid created successfully',
-      data: { id: bidId, title, bidNumber, deadline, agency, categoryId }
+      data: {
+        id: bidId,
+        createdById: req.user.id,
+        title,
+        bidNumber,
+        deadline,
+        agency,
+        procuringEntity: procuringEntity || null,
+        sector: sector || null,
+        location: location || null,
+        description: description || null,
+        bidStatus: normalizedStatus,
+        slug: generatedSlug,
+        categoryId
+      }
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to create bid', error: err.message });
   }
 }
 
+// update bid ( Admin or verified business only)
+export async function updateBid(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      bidNumber,
+      deadline,
+      agency,
+      procuringEntity,
+      sector,
+      location,
+      description,
+      status,
+      bidStatus,
+      categoryId
+    } = req.body;
+
+    if (!(await canManageBids(req.user))) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: only admins or businesses with approved KYC can update bids'
+      });
+    }
+
+    const existingBid = await db.select().from(bidsTable).where(eq(bidsTable.id, id)).limit(1);
+    if (existingBid.length === 0) {
+      return res.status(404).json({ success: false, message: 'Bid not found' });
+    }
+
+    const updateData = {};
+
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+
+    if (bidNumber !== undefined) {
+      updateData.bidNumber = bidNumber;
+    }
+
+    if (deadline !== undefined) {
+      const parsedDeadline = new Date(deadline);
+      if (Number.isNaN(parsedDeadline.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid deadline' });
+      }
+      updateData.deadline = parsedDeadline;
+    }
+
+    if (agency !== undefined) {
+      updateData.agency = agency;
+    }
+
+    if (procuringEntity !== undefined) {
+      updateData.procuringEntity = procuringEntity;
+    }
+
+    if (sector !== undefined) {
+      updateData.sector = sector;
+    }
+
+    if (location !== undefined) {
+      updateData.location = location;
+    }
+
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+
+    if (status !== undefined || bidStatus !== undefined) {
+      const normalizedStatus = status !== undefined ? status : bidStatus;
+      if (!BID_STATUSES.includes(normalizedStatus)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+      updateData.status = normalizedStatus;
+    }
+
+    if (categoryId !== undefined) {
+      if (categoryId === null) {
+        updateData.categoryId = null;
+      } else {
+        const cat = await db.select().from(bidCategoriesTable).where(eq(bidCategoriesTable.id, categoryId)).limit(1);
+        if (cat.length === 0) {
+          return res.status(400).json({ success: false, message: 'Invalid categoryId' });
+        }
+        updateData.categoryId = categoryId;
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one field is required to update'
+      });
+    }
+
+    await db.update(bidsTable).set(updateData).where(eq(bidsTable.id, id));
+
+    const updatedBidResult = await db.select()
+      .from(bidsTable)
+      .leftJoin(bidCategoriesTable, eq(bidsTable.categoryId, bidCategoriesTable.id))
+      .where(eq(bidsTable.id, id))
+      .limit(1);
+
+    const { bids: bid, bid_categories: category } = updatedBidResult[0];
+
+    return res.json({
+      success: true,
+      message: 'Bid updated successfully',
+      data: {
+        id: bid.id,
+        createdById: bid.createdById,
+        title: bid.title,
+        bidNumber: bid.bidNumber,
+        deadline: bid.deadline,
+        agency: bid.agency,
+        procuringEntity: bid.procuringEntity,
+        sector: bid.sector,
+        location: bid.location,
+        description: bid.description,
+        bidStatus: bid.status,
+        slug: bid.slug,
+        categoryId: bid.categoryId,
+        category: category ? { id: category.id, name: category.name } : null
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to update bid', error: err.message });
+  }
+}
 // List Bids (Public)
 export async function listBids(req, res) {
   try {
@@ -108,10 +302,17 @@ export async function listBids(req, res) {
       
       return {
         id: bid.id,
+        createdById: bid.createdById,
         title: bid.title,
         bidNumber: bid.bidNumber,
         deadline: bid.deadline,
         agency: bid.agency,
+        procuringEntity: bid.procuringEntity,
+        sector: bid.sector,
+        location: bid.location,
+        description: bid.description,
+        bidStatus: bid.status,
+        slug: bid.slug,
         categoryId: bid.categoryId,
         category: category ? { id: category.id, name: category.name } : null,
         daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
@@ -134,7 +335,7 @@ export async function getBidDetails(req, res) {
     const result = await db.select()
       .from(bidsTable)
       .leftJoin(bidCategoriesTable, eq(bidsTable.categoryId, bidCategoriesTable.id))
-      .where(eq(bidsTable.id, id))
+      .where(or(eq(bidsTable.id, id), eq(bidsTable.slug, id)))
       .limit(1);
 
     if (result.length === 0) {
@@ -148,10 +349,17 @@ export async function getBidDetails(req, res) {
       success: true,
       data: {
         id: bid.id,
+        createdById: bid.createdById,
         title: bid.title,
         bidNumber: bid.bidNumber,
         deadline: bid.deadline,
         agency: bid.agency,
+        procuringEntity: bid.procuringEntity,
+        sector: bid.sector,
+        location: bid.location,
+        description: bid.description,
+        bidStatus: bid.status,
+        slug: bid.slug,
         categoryId: bid.categoryId,
         category: category ? { id: category.id, name: category.name } : null,
         daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
@@ -161,5 +369,147 @@ export async function getBidDetails(req, res) {
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to retrieve bid details', error: err.message });
+  }
+}
+
+// Apply for a bid
+export async function applyForBid(req, res) {
+  try {
+    const { id } = req.params;
+    const { proposalText, proposedAmount } = req.body;
+    const userId = req.user.id;
+
+    if (!proposalText) {
+      return res.status(400).json({ success: false, message: 'Proposal text is required' });
+    }
+
+    // Check if the bid exists
+    const bidResult = await db.select().from(bidsTable).where(or(eq(bidsTable.id, id), eq(bidsTable.slug, id))).limit(1);
+    if (bidResult.length === 0) {
+      return res.status(404).json({ success: false, message: 'Bid not found' });
+    }
+    const bid = bidResult[0];
+
+    // Check if the user is the creator of the bid
+    if (bid.createdById === userId) {
+      return res.status(403).json({ success: false, message: 'You cannot apply to your own bid' });
+    }
+
+    // Check if the user has already applied
+    const existingApplication = await db.select()
+      .from(bidApplicationsTable)
+      .where(and(eq(bidApplicationsTable.bidId, bid.id), eq(bidApplicationsTable.userId, userId)))
+      .limit(1);
+
+    if (existingApplication.length > 0) {
+      return res.status(400).json({ success: false, message: 'You have already applied for this bid' });
+    }
+
+    // Create application
+    const applicationId = randomUUID();
+    await db.insert(bidApplicationsTable).values({
+      id: applicationId,
+      bidId: bid.id,
+      userId,
+      proposalText,
+      proposedAmount: proposedAmount || null,
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Successfully applied to bid',
+      data: {
+        id: applicationId,
+        bidId: bid.id,
+        userId,
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to apply for bid', error: err.message });
+  }
+}
+
+// Add a bid review
+export async function addBidReview(req, res) {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user.id;
+
+    if (!rating || !comment) {
+      return res.status(400).json({ success: false, message: 'Rating and comment are required' });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    // Check if the bid exists
+    const bidResult = await db.select().from(bidsTable).where(or(eq(bidsTable.id, id), eq(bidsTable.slug, id))).limit(1);
+    if (bidResult.length === 0) {
+      return res.status(404).json({ success: false, message: 'Bid not found' });
+    }
+    const bid = bidResult[0];
+
+    // Create review
+    const reviewId = randomUUID();
+    await db.insert(bidReviewsTable).values({
+      id: reviewId,
+      bidId: bid.id,
+      userId,
+      rating: parseInt(rating, 10),
+      comment,
+      createdAt: new Date(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Review submitted successfully',
+      data: {
+        id: reviewId,
+        bidId: bid.id,
+        userId,
+        rating: parseInt(rating, 10),
+        comment,
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to submit review', error: err.message });
+  }
+}
+
+// Get all reviews for a bid
+export async function getBidReviews(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Check if the bid exists
+    const bidResult = await db.select().from(bidsTable).where(or(eq(bidsTable.id, id), eq(bidsTable.slug, id))).limit(1);
+    if (bidResult.length === 0) {
+      return res.status(404).json({ success: false, message: 'Bid not found' });
+    }
+    const bid = bidResult[0];
+
+    const reviewsResult = await db.select({
+      id: bidReviewsTable.id,
+      bidId: bidReviewsTable.bidId,
+      rating: bidReviewsTable.rating,
+      comment: bidReviewsTable.comment,
+      createdAt: bidReviewsTable.createdAt,
+      user: {
+        id: usersTable.id,
+        name: usersTable.name,
+      }
+    })
+    .from(bidReviewsTable)
+    .leftJoin(usersTable, eq(bidReviewsTable.userId, usersTable.id))
+    .where(eq(bidReviewsTable.bidId, bid.id));
+
+    return res.json({ success: true, data: reviewsResult });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to retrieve reviews', error: err.message });
   }
 }

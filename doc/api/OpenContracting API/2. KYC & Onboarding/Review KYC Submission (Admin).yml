@@ -1,0 +1,26 @@
+info:
+  name: Review KYC Submission (Admin)
+  type: http
+  seq: 8
+
+http:
+  method: PUT
+  url: "{{base_url}}/api/kyc/review/:id"
+  params:
+    - name: id
+      value: 49bf5d70-ef1d-4074-a63e-72bc58a0e23e
+      type: path
+      description: KYC Submission ID
+  body:
+    type: json
+    data: |-
+      {
+        "status": "approved"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

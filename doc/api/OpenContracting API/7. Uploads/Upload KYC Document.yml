@@ -1,0 +1,40 @@
+info:
+  name: Upload KYC Document
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/api/uploads/document"
+  body:
+    type: multipart-form
+    data:
+      - name: document
+        type: file
+        value: []
+        description: PDF, JPG, PNG, or WEBP. Max 5MB.
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        var jsonData = res.getBody();
+        if (jsonData.success && jsonData.data) {
+            bru.setVar("uploaded_document_url", jsonData.data.url);
+            bru.setVar("uploaded_document_public_id", jsonData.data.publicId);
+            test("Uploaded document URL saved successfully", function () {
+                expect(bru.getVar("uploaded_document_url")).to.eql(jsonData.data.url);
+            });
+            test("Uploaded document public ID saved successfully", function () {
+                expect(bru.getVar("uploaded_document_public_id")).to.eql(jsonData.data.publicId);
+            });
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Uploads a KYC document to Cloudinary and saves data.url as {{uploaded_document_url}} and data.publicId as {{uploaded_document_public_id}}. Use those values in KYC document fields.
