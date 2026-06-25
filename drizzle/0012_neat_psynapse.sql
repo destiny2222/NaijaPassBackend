@@ -1,0 +1,1 @@
+ALTER TABLE `procurements` DROP COLUMN `project_id`;

@@ -104,3 +104,25 @@ export async function changePassword(req, res) {
     return res.status(500).json({ success: false, message: 'Failed to change password', error: err.message });
   }
 }
+
+export async function getAllUsers(req, res) {
+  try {
+    const users = await db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        phone: usersTable.phone,
+        role: usersTable.role,
+        emailVerifiedAt: usersTable.emailVerifiedAt
+      })
+      .from(usersTable);
+
+    return res.json({
+      success: true,
+      users
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to retrieve users', error: err.message });
+  }
+}

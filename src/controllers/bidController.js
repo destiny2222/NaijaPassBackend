@@ -103,7 +103,8 @@ export async function createBid(req, res) {
       location: location || null,
       description: description || null,
       status: normalizedStatus,
-      categoryId: categoryId || null
+      categoryId: categoryId || null,
+      formSchema: formSchema || null
     });
 
     return res.status(201).json({
@@ -122,7 +123,8 @@ export async function createBid(req, res) {
         description: description || null,
         bidStatus: normalizedStatus,
         slug: generatedSlug,
-        categoryId
+        categoryId,
+        formSchema: formSchema || null
       }
     });
   } catch (err) {
@@ -218,6 +220,10 @@ export async function updateBid(req, res) {
       }
     }
 
+    if (formSchema !== undefined) {
+      updateData.formSchema = formSchema;
+    }
+
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
@@ -252,7 +258,8 @@ export async function updateBid(req, res) {
         bidStatus: bid.status,
         slug: bid.slug,
         categoryId: bid.categoryId,
-        category: category ? { id: category.id, name: category.name } : null
+        category: category ? { id: category.id, name: category.name } : null,
+        formSchema: bid.formSchema
       }
     });
   } catch (err) {
@@ -315,6 +322,7 @@ export async function listBids(req, res) {
         slug: bid.slug,
         categoryId: bid.categoryId,
         category: category ? { id: category.id, name: category.name } : null,
+        formSchema: bid.formSchema,
         daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
         status: daysRemaining > 0 ? 'active' : 'closed',
         formattedDeadline: moment(bid.deadline).format('MMMM Do YYYY')
@@ -362,6 +370,7 @@ export async function getBidDetails(req, res) {
         slug: bid.slug,
         categoryId: bid.categoryId,
         category: category ? { id: category.id, name: category.name } : null,
+        formSchema: bid.formSchema,
         daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
         status: daysRemaining > 0 ? 'active' : 'closed',
         formattedDeadline: moment(bid.deadline).format('MMMM Do YYYY, h:mm a')
@@ -376,11 +385,11 @@ export async function getBidDetails(req, res) {
 export async function applyForBid(req, res) {
   try {
     const { id } = req.params;
-    const { proposalText, proposedAmount } = req.body;
+    const { proposalText, proposedAmount, formData } = req.body;
     const userId = req.user.id;
 
-    if (!proposalText) {
-      return res.status(400).json({ success: false, message: 'Proposal text is required' });
+    if (!proposalText && !formData) {
+      return res.status(400).json({ success: false, message: 'proposalText or formData is required' });
     }
 
     // Check if the bid exists
@@ -405,14 +414,30 @@ export async function applyForBid(req, res) {
       return res.status(400).json({ success: false, message: 'You have already applied for this bid' });
     }
 
+    // Validate formData against formSchema if it exists
+    if (bid.formSchema && Array.isArray(bid.formSchema)) {
+      if (!formData) {
+        return res.status(400).json({ success: false, message: 'formData is required based on the bid requirements' });
+      }
+      for (const field of bid.formSchema) {
+        if (field.required) {
+          const value = formData[field.name];
+          if (value === undefined || value === null || value === '') {
+            return res.status(400).json({ success: false, message: `Field ${field.name} is required` });
+          }
+        }
+      }
+    }
+
     // Create application
     const applicationId = randomUUID();
     await db.insert(bidApplicationsTable).values({
       id: applicationId,
       bidId: bid.id,
       userId,
-      proposalText,
+      proposalText: proposalText || null,
       proposedAmount: proposedAmount || null,
+      formData: formData || null,
       status: 'pending',
       createdAt: new Date(),
     });

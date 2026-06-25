@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, int, text, mysqlEnum, datetime } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, int, text, mysqlEnum, datetime, json } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 export const usersTable = mysqlTable('users', {
@@ -7,7 +7,7 @@ export const usersTable = mysqlTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   phone: varchar('phone', {length: 225 }).notNull(),
   password: varchar('password', { length: 255 }).notNull(),
-  role: mysqlEnum('role', ['user', 'admin']).default('user').notNull(),
+  role: mysqlEnum('role', ['user', 'admin', 'gov']).default('user').notNull(),
   emailVerifiedAt: datetime('email_verified_at'),
   otpCode: varchar('otp_code', { length: 6 }),
   otpExpiresAt: datetime('otp_expires_at'),
@@ -85,14 +85,16 @@ export const bidsTable = mysqlTable('bids', {
   description: text('description'),
   status: mysqlEnum('status', ['draft', 'published', 'cancelled', 'awarded']).default('published').notNull(),
   categoryId: int('category_id').references(() => bidCategoriesTable.id),
+  formSchema: json('form_schema'),
 });
 
 export const bidApplicationsTable = mysqlTable('bid_applications', {
   id: varchar('id', { length: 36 }).primaryKey(),
   bidId: varchar('bid_id', { length: 36 }).references(() => bidsTable.id, { onDelete: 'cascade' }).notNull(),
   userId: varchar('user_id', { length: 36 }).references(() => usersTable.id, { onDelete: 'cascade' }).notNull(),
-  proposalText: text('proposal_text').notNull(),
+  proposalText: text('proposal_text'),
   proposedAmount: varchar('proposed_amount', { length: 255 }),
+  formData: json('form_data'),
   status: mysqlEnum('status', ['pending', 'accepted', 'rejected']).default('pending').notNull(),
   createdAt: datetime('created_at').notNull(),
 });
@@ -106,12 +108,27 @@ export const bidReviewsTable = mysqlTable('bid_reviews', {
   createdAt: datetime('created_at').notNull(),
 });
 
+export const procurementsTable = mysqlTable('procurements', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  lga: varchar('lga', { length: 255 }),
+  state: varchar('state', { length: 255 }),
+  city: varchar('city', { length: 255 }),
+  entityType: varchar('entity_type', { length: 255 }),
+  contractor: varchar('contractor', { length: 255 }),
+  awardDate: datetime('award_date'),
+  amount: varchar('amount', { length: 255 }),
+  status: mysqlEnum('status', ['active', 'completed', 'suspended', 'cancelled']).default('active'),
+  description: text('description'),
+  createdById: varchar('created_by_id', { length: 36 }).references(() => usersTable.id, { onDelete: 'set null' }),
+});
+
 // Relationships
 export const usersRelations = relations(usersTable, ({ many }) => ({
   kycs: many(kycsTable),
   bids: many(bidsTable),
   bidApplications: many(bidApplicationsTable),
   bidReviews: many(bidReviewsTable),
+  procurements: many(procurementsTable),
 }));
 
 export const kycsRelations = relations(kycsTable, ({ one, many }) => ({
@@ -172,6 +189,13 @@ export const bidReviewsRelations = relations(bidReviewsTable, ({ one }) => ({
   }),
   user: one(usersTable, {
     fields: [bidReviewsTable.userId],
+    references: [usersTable.id],
+  }),
+}));
+
+export const procurementsRelations = relations(procurementsTable, ({ one }) => ({
+  createdBy: one(usersTable, {
+    fields: [procurementsTable.createdById],
     references: [usersTable.id],
   }),
 }));

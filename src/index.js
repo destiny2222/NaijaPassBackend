@@ -43,4 +43,5 @@ app.use("/api", apiRoutes);
 // Run express server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log('Backend restarted to pick up port 3005');
 });

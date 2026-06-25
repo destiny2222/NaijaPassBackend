@@ -428,11 +428,11 @@ export async function listAllKycs(req, res) {
   }
 }
 
-// Admin: Review/Update KYC Status (Approve / Reject)
+// Admin: Review/Update KYC Status (Approve / Reject) and edit details
 export async function reviewKyc(req, res) {
   try {
     const { id } = req.params;
-    const { status, rejectionReason } = req.body;
+    const { status, rejectionReason, ...editableFields } = req.body;
 
     if (!status || !['inprogress', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -448,12 +448,36 @@ export async function reviewKyc(req, res) {
       return res.status(404).json({ success: false, message: 'KYC record not found' });
     }
 
-    const updateData = { status };
+    // Remove fields that shouldn't be edited directly here
+    delete editableFields.id;
+    delete editableFields.userId;
+    delete editableFields.type;
+    delete editableFields.verificationStatus;
+    delete editableFields.verifiedAt;
+    
+    // Normalize date of birth field
+    if (editableFields.dateOfBirth) {
+      editableFields.dob = editableFields.dateOfBirth;
+    }
+    
+    // Normalize category id
+    if (editableFields.industryCategory && editableFields.industryCategory.id) {
+        editableFields.industryCategoryId = editableFields.industryCategory.id;
+        delete editableFields.industryCategory;
+    }
+
+    const updateData = { status, ...editableFields };
     if (status === 'rejected') {
-      if (!rejectionReason) {
-        return res.status(400).json({ success: false, message: 'Rejection reason is required when rejecting KYC' });
+      if (!rejectionReason && !kyc.rejectionReason) {
+        // If it was already rejected and has a reason, we allow preserving it if not passed
+        if (!req.body.rejectionReason && kyc.rejectionReason) {
+            updateData.rejectionReason = kyc.rejectionReason;
+        } else {
+            return res.status(400).json({ success: false, message: 'Rejection reason is required when rejecting KYC' });
+        }
+      } else if (rejectionReason) {
+        updateData.rejectionReason = rejectionReason;
       }
-      updateData.rejectionReason = rejectionReason;
     } else {
       updateData.rejectionReason = null;
     }

@@ -560,7 +560,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Dualization of Lagos-Ibadan Expressway Sector III\",\n  \"bidNumber\": \"BID-2026-FMWH-0089\",\n  \"deadline\": \"2026-08-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works & Housing\",\n  \"procuringEntity\": \"Federal Ministry of Works & Housing\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Procurement for the rehabilitation and dualization of Lagos-Ibadan Expressway Sector III.\",\n  \"status\": \"published\",\n  \"categoryId\": 1\n}",
+              "raw": "{\n  \"title\": \"Dualization of Lagos-Ibadan Expressway Sector III\",\n  \"bidNumber\": \"BID-2026-FMWH-0089\",\n  \"deadline\": \"2026-08-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works & Housing\",\n  \"procuringEntity\": \"Federal Ministry of Works & Housing\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Procurement for the rehabilitation and dualization of Lagos-Ibadan Expressway Sector III.\",\n  \"status\": \"published\",\n  \"categoryId\": 1,\n  \"formSchema\": [\n    {\n      \"name\": \"company_profile\",\n      \"type\": \"file\",\n      \"label\": \"Company Profile\",\n      \"required\": true\n    },\n    {\n      \"name\": \"experience\",\n      \"type\": \"textarea\",\n      \"label\": \"Relevant Experience\",\n      \"required\": false\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -597,7 +597,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Lagos-Ibadan Expressway Project\",\n  \"bidNumber\": \"BID-2026-FMWH-0089-UPDATED\",\n  \"deadline\": \"2026-09-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works\",\n  \"procuringEntity\": \"Federal Ministry of Works\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Updated procurement details for the Lagos-Ibadan Expressway project.\",\n  \"status\": \"published\",\n  \"categoryId\": 1\n}",
+              "raw": "{\n  \"title\": \"Updated Lagos-Ibadan Expressway Project\",\n  \"bidNumber\": \"BID-2026-FMWH-0089-UPDATED\",\n  \"deadline\": \"2026-09-30T17:00:00.000Z\",\n  \"agency\": \"Federal Ministry of Works\",\n  \"procuringEntity\": \"Federal Ministry of Works\",\n  \"sector\": \"Infrastructure\",\n  \"location\": \"Ibadan North LGA, Oyo State\",\n  \"description\": \"Updated procurement details for the Lagos-Ibadan Expressway project.\",\n  \"status\": \"published\",\n  \"categoryId\": 1,\n  \"formSchema\": [\n    {\n      \"name\": \"company_profile\",\n      \"type\": \"file\",\n      \"label\": \"Company Profile\",\n      \"required\": true\n    },\n    {\n      \"name\": \"experience\",\n      \"type\": \"textarea\",\n      \"label\": \"Relevant Experience\",\n      \"required\": false\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -722,6 +722,52 @@
                 "api",
                 "bids",
                 ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ea8b1a8d-19cd-4869-90bc-9e58319fbb1c",
+                  "description": "Bid ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Apply for Bid",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formData\": {\n    \"company_profile\": \"https://example.com/file.pdf\",\n    \"experience\": \"10 years\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bids/:id/apply",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "bids",
+                ":id",
+                "apply"
               ],
               "variable": [
                 {
@@ -888,6 +934,150 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "8. Procurements",
+      "item": [
+        {
+          "name": "Get Procurements",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "procurements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Procurement (Admin/Gov)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lga\": \"Oredo\",\n  \"state\": \"Edo State\",\n  \"city\": \"Benin City\",\n  \"entityType\": \"Government\",\n  \"contractor\": \"Julius Berger Nig. Plc\",\n  \"awardDate\": \"2023-10-12T00:00:00.000Z\",\n  \"amount\": \"450,000,000\",\n  \"status\": \"active\",\n  \"description\": \"Road Construction Project\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "procurements"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Procurement (Admin/Gov)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "procurements",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "some-procurement-id",
+                  "description": "Procurement ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Procurement (Admin/Gov)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "procurements",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "some-procurement-id",
+                  "description": "Procurement ID"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }
