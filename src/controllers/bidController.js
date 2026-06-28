@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { eq, and, gte, lt, like, or } from 'drizzle-orm';
+import { eq, and, gte, lt, like, or, ne } from 'drizzle-orm';
 import moment from 'moment';
 import db from '../db/index.js';
 import { bidsTable, bidCategoriesTable, kycsTable, bidApplicationsTable, bidReviewsTable, usersTable } from '../db/schema.js';
@@ -61,7 +61,8 @@ export async function createBid(req, res) {
       description,
       status,
       bidStatus,
-      categoryId
+      categoryId,
+      formSchema
     } = req.body;
     if (!title || !bidNumber || !deadline || !agency) {
       return res.status(400).json({ success: false, message: 'Title, bidNumber, deadline, and agency are required' });
@@ -87,10 +88,16 @@ export async function createBid(req, res) {
       }
     }
 
-    const bidId = randomUUID();
-    const generatedSlug = title.toLowerCase();
+    // Verify bidNumber is unique
+    const existingBid = await db.select().from(bidsTable).where(eq(bidsTable.bidNumber, bidNumber)).limit(1);
+    if (existingBid.length > 0) {
+      return res.status(400).json({ success: false, message: 'A bid with this Bid Number already exists. Please use a unique bid number.' });
+    }
 
-    await db.insert(bidsTable).values({
+    const bidId = randomUUID();
+    const generatedSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + bidId.substring(0, 6);
+
+    const insertData = {
       id: bidId,
       createdById: req.user.id,
       title,
@@ -103,9 +110,14 @@ export async function createBid(req, res) {
       location: location || null,
       description: description || null,
       status: normalizedStatus,
-      categoryId: categoryId || null,
-      formSchema: formSchema || null
-    });
+      categoryId: categoryId || null
+    };
+
+    if (formSchema !== undefined && formSchema !== null) {
+      insertData.formSchema = formSchema;
+    }
+
+    await db.insert(bidsTable).values(insertData);
 
     return res.status(201).json({
       success: true,
@@ -128,7 +140,8 @@ export async function createBid(req, res) {
       }
     });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Failed to create bid', error: err.message });
+    console.error("Bid creation failed", err);
+    return res.status(500).json({ success: false, message: 'Failed to create bid', error: err.message, sqlMessage: err.sqlMessage, details: err });
   }
 }
 
@@ -147,7 +160,8 @@ export async function updateBid(req, res) {
       description,
       status,
       bidStatus,
-      categoryId
+      categoryId,
+      formSchema
     } = req.body;
 
     if (!(await canManageBids(req.user))) {
@@ -169,6 +183,10 @@ export async function updateBid(req, res) {
     }
 
     if (bidNumber !== undefined) {
+      const existingBidNum = await db.select().from(bidsTable).where(and(eq(bidsTable.bidNumber, bidNumber), ne(bidsTable.id, id))).limit(1);
+      if (existingBidNum.length > 0) {
+        return res.status(400).json({ success: false, message: 'A bid with this Bid Number already exists. Please use a unique bid number.' });
+      }
       updateData.bidNumber = bidNumber;
     }
 

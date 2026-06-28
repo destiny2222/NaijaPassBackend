@@ -7,6 +7,7 @@ import scraperRoutes from './scraperRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 import procurementRoutes from './procurementRoutes.js';
+import assistantRoutes from './assistantRoutes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/scraper', scraperRoutes);
 router.use('/profile', profileRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/procurements', procurementRoutes);
+router.use('/assistant', assistantRoutes);
 
 export default router;
